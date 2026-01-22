@@ -223,7 +223,86 @@ df -h
 ---
 
 ## STEP 10: Stop or Delete the VM (IMPORTANT)
+⚙️ OpenStack Deployment Steps
+1️⃣ Prepare the Host System
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git curl vim net-tools
+sudo swapoff -a
 
+2️⃣ Create Stack User
+sudo useradd -s /bin/bash -d /opt/stack -m stack
+sudo passwd stack
+sudo usermod -aG sudo stack
+
+su - stack
+
+3️⃣ Clone DevStack
+git clone https://opendev.org/openstack/devstack
+cd devstack
+
+4️⃣ Configure DevStack (local.conf)
+[[local|localrc]]
+
+ADMIN_PASSWORD=stack
+DATABASE_PASSWORD=stack
+RABBIT_PASSWORD=stack
+SERVICE_PASSWORD=stack
+
+HOST_IP=$(hostname -I | awk '{print $1}')
+
+# Disable unused services to reduce resource usage
+disable_service cinder
+disable_service swift
+disable_service heat
+
+5️⃣ Install OpenStack
+./stack.sh
+
+
+⏳ Installation time: 30–45 minutes
+
+🌐 Access OpenStack Dashboard
+
+Open a web browser and navigate to:
+
+http://<GCP-VM-EXTERNAL-IP>/dashboard
+
+
+Login Credentials
+
+Username: admin
+
+Password: stack
+
+Domain: default
+
+🧪 Launching a Virtual Machine using OpenStack
+6️⃣ Upload Image (Glance)
+wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+
+openstack image create "Ubuntu-20.04" \
+  --file focal-server-cloudimg-amd64.img \
+  --disk-format qcow2 \
+  --container-format bare \
+  --public
+
+7️⃣ Create Flavor
+openstack flavor create lab-flavor \
+  --ram 1024 \
+  --disk 10 \
+  --vcpus 1
+
+8️⃣ Create Network
+openstack network create private-net
+openstack subnet create private-subnet \
+  --network private-net \
+  --subnet-range 192.168.1.0/24
+
+9️⃣ Launch Instance
+openstack server create openstack-vm \
+  --image Ubuntu-20.04 \
+  --flavor lab-flavor \
+  --network private-net
 ### Stop VM (Temporary)
 
 * Compute Engine → VM Instances → **Stop**
