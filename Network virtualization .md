@@ -1,5 +1,3 @@
-Awesome — here’s a **single unified diagram** that visually ties **CPU, Storage, and Network virtualization** together from an **operating-system–oriented cloud computing view**.
-You can **redraw this in exams** or use it to explain the whole concept in one shot.
 
 ---
 
@@ -81,16 +79,4 @@ Each workload thinks it owns **dedicated resources**, but everything is shared s
 
 ---
 
-## One-Line Explanation (Exam Ready)
 
-> **The cloud hypervisor virtualizes CPU, storage, and network resources—using scheduling, abstraction, and packet-level control (PPPK)—to provide isolated virtual environments for each virtual machine.**
-
----
-
-If you want next:
-
-* a **handwritten-exam-friendly simplified version**
-* a **labelled diagram with short notes**
-* or a **mapping of this diagram to AWS / OpenStack**
-
-Just say the word 👍
