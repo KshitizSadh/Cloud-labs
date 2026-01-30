@@ -1,4 +1,45 @@
-
+```
+┌────────────────────────────────────────────┐
+│               CONTROL PLANE                │
+│                                            │
+│   User Space                                │
+│   ┌──────────┐      ┌───────────┐          │
+│   │  kubectl │ ---> │ K8s API    │          │
+│   └──────────┘      │ Server     │          │
+│                          │                    │
+│                          ▼                    │
+│                   CNI Plugin (Flannel / Calico / Cilium)
+│                   (Configures kernel objects)
+└────────────────────────────────────────────┘
+                    │
+                    ▼
+┌────────────────────────────────────────────┐
+│                DATA PLANE                  │
+│                                            │
+│  User Space            Kernel Space        │
+│                                            │
+│  Pod1 App               Pod1 netns         │
+│  ┌─────────┐           ┌────────────┐     │
+│  │ Process │--eth0---->| veth-pod1  │     │
+│  └─────────┘           └──────┬─────┘     │
+│                                │ veth pair
+│                                ▼
+│                         ┌────────────┐
+│                         │ Linux      │
+│                         │ Bridge /   │
+│                         │ OVS / BPF  │
+│                         └──────┬─────┘
+│                                │
+│                        Routing / Overlay
+│                                │
+│                         ┌────────────┐
+│                         │ Host eth0  │
+│                         │ / NIC      │
+│                         └──────┬─────┘
+│                                │
+│                           Physical Network
+└────────────────────────────────────────────┘
+```
 ---
 
 # Single Unified Diagram: Resource Virtualization in Cloud Computing
