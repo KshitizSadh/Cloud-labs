@@ -1,3 +1,4 @@
+<img width="1194" height="391" alt="image" src="https://github.com/user-attachments/assets/bd9911e3-ab08-440c-aace-912902458974" />
 ```
 ┌────────────────────────────────────────────┐
 │               CONTROL PLANE                │
