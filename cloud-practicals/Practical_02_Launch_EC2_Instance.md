@@ -88,6 +88,8 @@ An **AMI (Amazon Machine Image)** is a snapshot of an OS with optional pre-insta
 2. In the search bar, type **EC2** and click the service
 3. Ensure you are in the correct region (top-right corner) — use **us-east-1** for free tier
 4. Click **Launch instance**
+<img width="1349" height="819" alt="image" src="https://github.com/user-attachments/assets/4f0fce62-6cb7-487f-950b-c3eda8aa9b25" />
+
 
 **Configure the instance as follows:**
 
@@ -100,10 +102,12 @@ Name: my-first-ec2
 - Select **Amazon Linux 2023 AMI** (or Amazon Linux 2)
 - Architecture: **64-bit (x86)**
 - This is **free tier eligible**
+<img width="1228" height="791" alt="image" src="https://github.com/user-attachments/assets/9916a544-df3d-4b69-9610-6b38d6fccd86" />
 
 #### Instance Type
 ```
 t2.micro  →  1 vCPU, 1 GB RAM  →  Free tier eligible
+<img width="1238" height="283" alt="image" src="https://github.com/user-attachments/assets/185e8917-dfbf-4c91-b304-4427ee3a50c3" />
 ```
 
 > On newer regions, use **t3.micro** if t2.micro isn't available
@@ -117,6 +121,7 @@ t2.micro  →  1 vCPU, 1 GB RAM  →  Free tier eligible
   - `.ppk` → for Windows (PuTTY)
 - Click **Create key pair** — the `.pem` file downloads automatically
 - **Store this file safely — you cannot download it again!**
+<img width="771" height="740" alt="image" src="https://github.com/user-attachments/assets/d020fe3b-f51d-409a-a7dc-061c17611535" />
 
 #### Network Settings
 - VPC: default
@@ -130,6 +135,7 @@ t2.micro  →  1 vCPU, 1 GB RAM  →  Free tier eligible
 ```
 8 GiB  gp3  Root volume  (Free tier: up to 30 GB)
 ```
+<img width="1247" height="748" alt="image" src="https://github.com/user-attachments/assets/1f4bb6fe-2820-465e-bfbc-57d3998aaa43" />
 
 #### Summary
 - Number of instances: **1**
@@ -191,6 +197,7 @@ Outbound Rules:
 EC2 Dashboard → Instances → Select instance →
 Security tab → Security groups → Edit inbound rules
 ```
+<img width="1919" height="631" alt="image" src="https://github.com/user-attachments/assets/82f649bb-9b08-404d-8955-f266d532a90d" />
 
 ---
 
@@ -217,6 +224,7 @@ ssh -i /path/to/my-ec2-keypair.pem ec2-user@54.123.45.67
 ```bash
 ssh -i <path-to-key.pem> <username>@<public-ip-or-dns>
 ```
+<img width="1027" height="356" alt="image" src="https://github.com/user-attachments/assets/447f44cb-2e48-4b9f-9869-4473a3f20326" />
 
 **Default usernames by AMI:**
 | AMI | Username |
@@ -236,13 +244,8 @@ Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Type `yes` and press Enter.
 
 #### 5. You Are Now Connected!
-```bash
-       __|  __|_  )
-       _|  (     /   Amazon Linux 2 AMI
-      ___|\___|___|
+<img width="1278" height="681" alt="image" src="https://github.com/user-attachments/assets/5a563fb1-497f-44e2-9467-875093e9a251" />
 
-[ec2-user@ip-172-31-xx-xx ~]$
-```
 
 #### 6. Basic Commands to Explore the Instance
 ```bash
