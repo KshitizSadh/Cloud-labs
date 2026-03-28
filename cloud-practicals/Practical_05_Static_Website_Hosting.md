@@ -215,73 +215,9 @@ http://my-static-website-2024.s3-website-us-east-1.amazonaws.com
 
 ---
 
-## 🛠️ Option B — Azure Blob Storage Static Website
 
-### Step 1 — Create a Storage Account
 
-1. Go to **Azure Portal → Storage accounts → Create**
-2. Configure:
-   ```
-   Subscription:        Your subscription
-   Resource group:      Create new: my-website-rg
-   Storage account:     mystaticwebsite2024  (lowercase, 3-24 chars)
-   Region:              East US
-   Performance:         Standard
-   Redundancy:          LRS (Locally Redundant Storage) — cheapest
-   ```
-3. Click **Review + create → Create**
-
-### Step 2 — Enable Static Website
-
-```
-Storage account → Data management → Static website →
-  Enabled
-  Index document name:    index.html
-  Error document path:    error.html
-→ Save
-```
-
-Note the **Primary endpoint**:
-```
-https://mystaticwebsite2024.z13.web.core.windows.net/
-```
-
-A special container named `$web` is created automatically.
-
-### Step 3 — Upload Files
-
-```
-Storage account → Containers → $web → Upload files
-→ Select your HTML, CSS, JS files
-→ Upload
-```
-
-**Via Azure CLI:**
-```bash
-# Login
-az login
-
-# Upload all files
-az storage blob upload-batch \
-  --account-name mystaticwebsite2024 \
-  --destination '$web' \
-  --source ./website-folder/
-
-# Set correct content type
-az storage blob update \
-  --account-name mystaticwebsite2024 \
-  --container-name '$web' \
-  --name index.html \
-  --content-type text/html
-```
-
-### Step 4 — Access Your Website
-
-Open the Primary endpoint from Step 2 in your browser. No bucket policy needed — the `$web` container is automatically public when static website is enabled.
-
----
-
-## 🛠️ Option C — GCP Cloud Storage Static Website
+## 🛠️ Option B — GCP Cloud Storage Static Website
 
 ### Step 1 — Create a Bucket
 
