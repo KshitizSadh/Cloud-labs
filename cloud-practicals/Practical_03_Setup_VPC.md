@@ -104,6 +104,7 @@ So /24 gives you 256 - 5 = 251 usable IPs
 - Region: **us-east-1** (N. Virginia) — recommended for this practical
 
 ---
+<img width="853" height="129" alt="image" src="https://github.com/user-attachments/assets/3afa0ff1-bfd0-4812-9bf0-18b982f42e26" />
 
 ### Step A — Create a Custom VPC
 
@@ -139,12 +140,14 @@ Select your VPC → Actions → Edit VPC settings →
    IPv4 CIDR block:       10.0.1.0/24
    ```
 3. Click **Create subnet**
+<img width="1609" height="293" alt="image" src="https://github.com/user-attachments/assets/fed56a08-1510-438a-b5fe-1a1e7f5015e7" />
 
 **Enable Auto-assign Public IP for public subnet:**
 ```
 Select public-subnet-1 → Actions → Edit subnet settings →
 ✅ Enable auto-assign public IPv4 address → Save
 ```
+<img width="1181" height="128" alt="image" src="https://github.com/user-attachments/assets/09629bf2-259e-48b6-b7e8-293e66dc4379" />
 
 ---
 
@@ -161,6 +164,7 @@ Select public-subnet-1 → Actions → Edit subnet settings →
 3. Click **Create subnet**
 
 > Do NOT enable auto-assign public IP for the private subnet
+<img width="1556" height="40" alt="image" src="https://github.com/user-attachments/assets/f82bba1b-6920-40d5-89ff-23ab5d4fb69a" />
 
 ---
 
@@ -177,6 +181,7 @@ Auto-assign IP:  Enable
 Security Group:  Allow SSH (port 22) from My IP, HTTP (80) from anywhere
 Key pair:        my-ec2-keypair
 ```
+<img width="670" height="671" alt="image" src="https://github.com/user-attachments/assets/6c419868-6ec0-4f18-a9d7-6bb96abefbc7" />
 
 **Private EC2 Instance:**
 ```
@@ -189,6 +194,7 @@ Auto-assign IP:  Disable (it won't have a public IP)
 Security Group:  Allow SSH (port 22) from 10.0.1.0/24 (only from public subnet)
 Key pair:        my-ec2-keypair
 ```
+<img width="1489" height="79" alt="image" src="https://github.com/user-attachments/assets/c3df97be-96c2-48a5-8f2c-378550eaceaa" />
 
 ---
 
@@ -206,6 +212,7 @@ Key pair:        my-ec2-keypair
 ```
 Select my-igw → Actions → Attach to VPC → Select my-custom-vpc → Attach
 ```
+<img width="1833" height="400" alt="image" src="https://github.com/user-attachments/assets/83572144-8440-4121-ba46-ccf027a28b3e" />
 
 #### Create a Public Route Table
 1. Go to **VPC → Route Tables → Create route table**
@@ -223,12 +230,14 @@ Select public-rt → Routes tab → Edit routes → Add route:
   Target:      Internet Gateway → my-igw
 → Save changes
 ```
+<img width="1598" height="549" alt="image" src="https://github.com/user-attachments/assets/c0496725-14e5-46ae-9fe6-b1e62999e5bb" />
 
 #### Associate Public Subnet with Public Route Table
 ```
 Select public-rt → Subnet associations tab → Edit subnet associations →
 ✅ public-subnet-1 → Save associations
 ```
+<img width="1907" height="563" alt="image" src="https://github.com/user-attachments/assets/6288d483-24cc-4cef-aaa8-53cf387a2875" />
 
 > Now any instance in `public-subnet-1` can reach the internet!
 
@@ -243,6 +252,7 @@ A **NAT Gateway** (Network Address Translation) sits in the public subnet and al
 VPC → Elastic IPs → Allocate Elastic IP address → Allocate
 Note the Allocation ID: eipalloc-XXXXXXXXXX
 ```
+<img width="1290" height="143" alt="image" src="https://github.com/user-attachments/assets/641e2330-3822-4ef8-8b04-a0c0709b11d3" />
 
 #### Create NAT Gateway
 1. Go to **VPC → NAT Gateways → Create NAT gateway**
@@ -255,6 +265,8 @@ Note the Allocation ID: eipalloc-XXXXXXXXXX
    ```
 3. Click **Create NAT gateway**
 4. Wait for status to change from `Pending` to `Available` (~1-2 minutes)
+<img width="1607" height="672" alt="image" src="https://github.com/user-attachments/assets/58ad361d-c2f8-476d-8658-d6431a708d08" />
+
 
 #### Create a Private Route Table
 1. Go to **VPC → Route Tables → Create route table**
@@ -271,12 +283,14 @@ Select private-rt → Routes → Edit routes → Add route:
   Target:      NAT Gateway → my-nat-gw
 → Save changes
 ```
+<img width="1611" height="318" alt="image" src="https://github.com/user-attachments/assets/f0831cc6-435a-43a7-a770-042b27e4f33b" />
 
 #### Associate Private Subnet with Private Route Table
 ```
 Select private-rt → Subnet associations → Edit subnet associations →
 ✅ private-subnet-1 → Save associations
 ```
+<img width="1599" height="558" alt="image" src="https://github.com/user-attachments/assets/242cab3e-2385-4f15-bd3b-cf3fcf4d0b6c" />
 
 ---
 
@@ -291,6 +305,7 @@ ssh -i my-ec2-keypair.pem ec2-user@<public-ip>
 ping google.com
 curl https://google.com
 ```
+<img width="1038" height="828" alt="image" src="https://github.com/user-attachments/assets/0d08f8cd-3c39-4878-87b4-e3ea6c67321a" />
 
 ### Test Private EC2 Via Bastion (Jump Host)
 The public EC2 acts as a **bastion host** (jump server) to reach the private EC2.
@@ -306,13 +321,9 @@ ssh -A -i my-ec2-keypair.pem ec2-user@<public-ec2-ip>
 # From inside the public EC2, SSH to private EC2
 ssh ec2-user@<private-ec2-private-ip>
 ```
+<img width="916" height="768" alt="image" src="https://github.com/user-attachments/assets/53c4ec55-f6c9-4a40-adda-8f3a66f1e127" />
 
-**Method 2 — Direct SSH Jump:**
-```bash
-ssh -i my-ec2-keypair.pem \
-    -J ec2-user@<public-ec2-ip> \
-    ec2-user@<private-ec2-private-ip>
-```
+
 
 ### Test Private EC2 Can Reach Internet (via NAT)
 ```bash
@@ -320,6 +331,8 @@ ssh -i my-ec2-keypair.pem \
 ping google.com           # Should work (via NAT)
 curl ifconfig.me          # Will show the NAT Gateway's Elastic IP, not your instance's private IP
 ```
+<img width="809" height="343" alt="image" src="https://github.com/user-attachments/assets/cb2f73fd-38af-4402-84d9-eb66891508a3" />
+>
 
 ---
 
