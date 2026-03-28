@@ -161,6 +161,7 @@ systemctl enable httpd
 3. Click **Create launch template**
 
 ---
+<img width="1919" height="464" alt="image" src="https://github.com/user-attachments/assets/6c5cfafb-8f02-40da-9d51-963bef1bcdf1" />
 
 ### Step B — Create an Auto Scaling Group
 
@@ -178,6 +179,7 @@ VPC:      Select your VPC (or default VPC)
 Subnets:  Select at least 2 public subnets in different AZs
           (e.g., us-east-1a, us-east-1b)
 ```
+<img width="979" height="447" alt="image" src="https://github.com/user-attachments/assets/6f2be390-f5d5-4fd8-b1ed-414c8bd7491e" />
 
 **Step 3 — Configure advanced options (Load Balancing):**
 ```
@@ -195,6 +197,7 @@ Health checks:
   ✅ Turn on Elastic Load Balancing health checks
   Health check grace period: 300 seconds
 ```
+<img width="1624" height="663" alt="image" src="https://github.com/user-attachments/assets/0e1310de-33a4-439b-8d10-32ff397e3123" />
 
 **Step 4 — Configure group size and scaling:**
 ```
@@ -209,13 +212,12 @@ Scaling policies:
   Metric type:        Average CPU utilization
   Target value:       70
   Instance warmup:    300 seconds
-```
+<img width="1491" height="605" alt="image" src="https://github.com/user-attachments/assets/f001b2ee-bf40-4c71-b877-a12bc3a93b89" />
 
-**Step 5 — Add notifications (optional):**
 ```
-Create notification → SNS topic: asg-notifications
-Events: Launch, Terminate, Fail to launch, Fail to terminate
-```
+<img width="847" height="578" alt="image" src="https://github.com/user-attachments/assets/afffd062-dac1-4f12-a181-1566e89b0100" />
+
+d123
 
 **Step 6 — Review and Create**
 
@@ -228,6 +230,7 @@ Events: Launch, Terminate, Fail to launch, Fail to terminate
 The ALB was created as part of the ASG setup above. Let's verify and understand it.
 
 **Navigate to: EC2 → Load Balancers → web-alb**
+
 
 ```
 DNS Name: web-alb-XXXXXXXX.us-east-1.elb.amazonaws.com
@@ -258,6 +261,7 @@ ALB can route based on:
 ```
 Open browser: http://web-alb-XXXXXXXX.us-east-1.elb.amazonaws.com
 ```
+<img width="1677" height="502" alt="image" src="https://github.com/user-attachments/assets/01df3784-7590-4dfa-910b-f89d767c627b" />
 
 You should see your custom webpage with the instance ID. Refresh several times to see it switch between instances!
 
@@ -281,27 +285,9 @@ top
 # or
 watch -n 1 'uptime'
 ```
+<img width="960" height="232" alt="image" src="https://github.com/user-attachments/assets/82ca3850-78da-4d86-b774-02e118505699" />
 
-#### Method 2 — Apache Benchmark (HTTP Load Test)
-```bash
-# Install Apache Benchmark (on your local machine)
-sudo apt install -y apache2-utils    # Ubuntu/Debian
-# or
-brew install httpd                    # Mac
 
-# Send 10,000 requests with 100 concurrent connections
-ab -n 10000 -c 100 http://web-alb-XXXXXXXXX.us-east-1.elb.amazonaws.com/
-```
-
-#### Method 3 — Using `hey` Load Generator
-```bash
-# Install hey
-wget https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64 -O hey
-chmod +x hey
-
-# Run load test
-./hey -n 50000 -c 200 http://web-alb-XXXXXXXXX.us-east-1.elb.amazonaws.com/
-```
 
 #### Monitoring the Scaling Event
 ```
