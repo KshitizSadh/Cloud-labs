@@ -83,6 +83,7 @@ Dynamic Website:
    Encryption:   SSE-S3 (server-side encryption, default)
    ```
 3. Click **Create bucket**
+<img width="1901" height="904" alt="image" src="https://github.com/user-attachments/assets/f1653075-0f84-4fab-8072-3c8ccd5649d1" />
 
 ### Step 2 — Upload Website Files
 
@@ -179,6 +180,7 @@ Note the **Bucket website endpoint** — it looks like:
 ```
 http://my-static-website-2024.s3-website-us-east-1.amazonaws.com
 ```
+<img width="1497" height="731" alt="image" src="https://github.com/user-attachments/assets/b65caef4-7eb6-451d-af08-9e7e492581de" />
 
 ### Step 4 — Configure Permissions (Bucket Policy)
 
@@ -201,6 +203,7 @@ Paste this policy (replace `my-static-website-2024` with your bucket name):
     ]
 }
 ```
+<img width="1493" height="693" alt="image" src="https://github.com/user-attachments/assets/6ad6f90e-0a41-4fb0-add2-4ad9ab28be9d" />
 
 Click **Save changes**. You should see a **Publicly accessible** badge on your bucket.
 
@@ -212,69 +215,13 @@ http://my-static-website-2024.s3-website-us-east-1.amazonaws.com
 ```
 
 🎉 Your static website is live!
+<img width="1179" height="735" alt="image" src="https://github.com/user-attachments/assets/f1419334-9436-4f18-9611-a145f4613b4f" />
 
 ---
 
 
 
-## 🛠️ Option B — GCP Cloud Storage Static Website
 
-### Step 1 — Create a Bucket
-
-1. Go to **GCP Console → Cloud Storage → Buckets → Create**
-2. Configure:
-   ```
-   Bucket name:          my-static-website-2024  (globally unique)
-   Location type:        Region → us-central1
-   Storage class:        Standard
-   Access control:       Fine-grained
-   ```
-3. Click **Create**
-
-### Step 2 — Upload Files
-
-```
-Select bucket → Upload files → Select your HTML/CSS/JS files
-```
-
-**Via gsutil CLI:**
-```bash
-# Authenticate
-gcloud auth login
-
-# Upload all files
-gsutil -m cp -r ./website-folder/* gs://my-static-website-2024/
-
-# Make all objects publicly readable
-gsutil iam ch allUsers:objectViewer gs://my-static-website-2024
-```
-
-### Step 3 — Set Permissions for Public Access
-
-```
-Bucket → Permissions tab → Grant access
-  New principals:  allUsers
-  Role:            Storage Object Viewer
-→ Save
-```
-
-### Step 4 — Set Special Index Page Metadata
-
-```bash
-# Set website configuration
-gsutil web set -m index.html -e 404.html gs://my-static-website-2024
-```
-
-### Step 5 — Access Your Website
-
-The URL format is:
-```
-https://storage.googleapis.com/my-static-website-2024/index.html
-```
-
-For a cleaner URL, configure a **custom domain** with a CNAME to `c.storage.googleapis.com`.
-
----
 
 ## 📊 Platform Comparison
 
