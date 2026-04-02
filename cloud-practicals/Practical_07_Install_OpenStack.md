@@ -1,12 +1,12 @@
 # Practical 07 — Install OpenStack
 
----
+-----
 
 ## 📌 Objective
 
-Set up a local OpenStack environment for practicing private cloud infrastructure deployment and management.
+Set up a local OpenStack environment for practicing private cloud infrastructure deployment and management, with specific troubleshooting for Ubuntu derivatives like Pop\!\_OS.
 
----
+-----
 
 ## 🧠 Conceptual Background (Know-How)
 
@@ -16,11 +16,11 @@ Set up a local OpenStack environment for practicing private cloud infrastructure
 
 ### OpenStack vs AWS
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
-│         OpenStack ↔ AWS Service Mapping              │
+│                  OpenStack ↔ AWS Service Mapping     │
 ├─────────────────────┬────────────────────────────────┤
-│    OpenStack        │           AWS                  │
+│    OpenStack        │             AWS                │
 ├─────────────────────┼────────────────────────────────┤
 │ Nova                │ EC2 (Compute)                  │
 │ Neutron             │ VPC (Networking)               │
@@ -37,7 +37,7 @@ Set up a local OpenStack environment for practicing private cloud infrastructure
 
 ### OpenStack Architecture
 
-```
+```text
                         ┌──────────────────┐
                         │     Horizon      │  ← Web Dashboard (UI)
                         │  (Dashboard)     │
@@ -62,243 +62,206 @@ Set up a local OpenStack environment for practicing private cloud infrastructure
    └──────────────┘    └──────────────┘    └──────────────┘
 ```
 
+### OpenStack Release Names (Reference)
+
+| Release | Branch | Status |
+| :--- | :--- | :--- |
+| **Dalmatian** | `stable/2024.2` | Current stable ✅ |
+| **Caracal** | `stable/2024.1` | May be removed from upstream |
+| **Bobcat** | `stable/2023.2` | Older stable |
+| **Antelope** | `stable/2023.1` | Older stable |
+| **master** | `master` | Development (unstable) |
+
+> ⚠️ **Branch note:** DevStack branch names change as new releases land. Always check available branches before cloning.
+
 ### Installation Options
 
-```
-1. DevStack (Recommended for learning)
-   → All-in-one script-based installation
-   → Runs on a single VM or bare metal server
-   → Resets on reboot (development only)
-   → Best for learning and testing
+1.  **DevStack (Recommended for learning):** All-in-one script-based installation. Runs on a single VM or bare metal server. Resets on reboot (development only).
+2.  **MicroStack:** Ubuntu Snap — quickest. Good for quick demos.
+3.  **Packstack:** RHEL/CentOS Puppet-based installer.
+4.  **Kolla-Ansible:** Docker-container based deployment. Production-grade, multi-node.
+5.  **Manual Installation:** Component by component. Best for deep understanding.
 
-2. Packstack (RHEL/CentOS)
-   → Puppet-based installer
-   → More persistent than DevStack
-   → Good for single-node and multi-node
-
-3. MicroStack (Ubuntu Snap)
-   → Simplest installation
-   → sudo snap install microstack
-   → Good for quick demos
-
-4. Kolla-Ansible (Production)
-   → Docker-container based deployment
-   → Production-grade, multi-node
-   → Complex but scalable
-
-5. Manual Installation
-   → Component by component
-   → Best for deep understanding
-   → Time-consuming
-```
-
----
+-----
 
 ## 🛠️ Installation Guide
 
 ### System Requirements
 
 **Minimum for DevStack (All-in-One):**
-```
-CPU:     4 cores (8 recommended)
-RAM:     8 GB minimum (16 GB recommended)
-Disk:    50 GB free
-OS:      Ubuntu 22.04 LTS (recommended)
-Network: Internet access for downloading packages
-```
+
+  * **CPU:** 4 cores (8 recommended)
+  * **RAM:** 8 GB minimum (16 GB recommended)
+  * **Disk:** 50 GB free
+  * **OS:** Ubuntu 22.04 LTS / 24.04 LTS (or derivatives like Pop\!\_OS)
+  * **Network:** Internet access for downloading packages
 
 **Hypervisor Check (Nested Virtualization):**
-```bash
-# Check if KVM is available (on your host machine)
-egrep -c '(vmx|svm)' /proc/cpuinfo
-# If output is > 0, KVM is supported
 
-# Enable nested virtualization (Intel)
+```bash
+# Check if KVM is available (Output > 0 means KVM is supported)
+egrep -c '(vmx|svm)' /proc/cpuinfo
+
+# Enable nested virtualization (Intel CPU)
 sudo modprobe -r kvm_intel
 sudo modprobe kvm_intel nested=1
 echo "options kvm-intel nested=1" | sudo tee /etc/modprobe.d/kvm-intel.conf
 ```
 
----
+-----
 
-### Method 1 — MicroStack (Quickest, Ubuntu only)
+### Method 1 — MicroStack (Quickest, Ubuntu / Snap only)
+
+*Note: Requires `snapd` to be installed on Pop\!\_OS (`sudo apt install snapd`).*
 
 ```bash
 # Install MicroStack via snap
 sudo snap install microstack --beta
 
-# Initialize MicroStack (all-in-one)
+# Initialize (all-in-one)
 sudo microstack init --auto --control
-
-# Check installation status
-sudo microstack.openstack service list
 
 # Get admin password
 sudo snap get microstack config.credentials.keystone-password
-
-# Access Horizon dashboard
-# URL: http://10.20.20.1
-# User: admin
-# Password: (from above command)
 ```
 
----
+-----
 
 ### Method 2 — DevStack (Recommended for Learning)
 
-#### 1. Prepare a Fresh Ubuntu 22.04 System/VM
+#### 1\. Prepare the System
 
 ```bash
-# Update system
 sudo apt update && sudo apt upgrade -y
-
-# Install required packages
 sudo apt install -y git python3-pip
 ```
 
-#### 2. Create the Stack User (Required by DevStack)
+#### 2\. Create the Stack User (Required)
+
+DevStack requires a dedicated user with passwordless sudo access.
 
 ```bash
 # Create dedicated user
 sudo useradd -s /bin/bash -d /opt/stack -m stack
 
-# Give sudo privileges without password (required for DevStack)
+# Give passwordless sudo
 echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
 
 # Switch to stack user
 sudo su - stack
 ```
 
-#### 3. Clone DevStack
+#### 3\. Clone DevStack
+
+Always check for the latest stable branch before cloning.
 
 ```bash
-# Clone DevStack from the stable branch
-git clone https://opendev.org/openstack/devstack -b stable/2024.1
+# Clone the repository
+git clone https://opendev.org/openstack/devstack
 cd devstack
+
+# List available stable branches
+git branch -r | grep stable
+
+# Checkout the latest stable branch (e.g., master or 2024.2)
+git checkout master
 ```
 
-#### 4. Create the Configuration File
+#### 4\. 🛑 FIX: The "Bulletproof" Distro Override for Pop\!\_OS
+
+DevStack rigidly checks for "Ubuntu" or "Debian". If you are on an Ubuntu derivative like Pop\!\_OS, the script will crash because it fails to map the package manager correctly. You must hardcode the OS variables.
+
+1.  Open the internal functions file:
+    ```bash
+    nano /opt/stack/devstack/functions-common
+    ```
+2.  Press `Ctrl+W` to search for `typeset -xr os_VENDOR`. This is where DevStack locks in the variables.
+3.  Immediately **above** that block of `typeset` commands, add this override:
+    ```bash
+    # --- FORCE UBUNTU NOBLE OVERRIDE ---
+    os_VENDOR="Ubuntu"
+    os_PACKAGE="deb"
+    os_CODENAME="noble"
+    # -----------------------------------
+    ```
+4.  Save (`Ctrl+O`, `Enter`) and Exit (`Ctrl+X`).
+5.  Ensure the logging directory exists so the script doesn't crash on output:
+    ```bash
+    sudo mkdir -p /opt/stack/logs
+    sudo chown -R stack:stack /opt/stack/logs
+    ```
+
+#### 5\. Find Your Network Interface Name
+
+```bash
+ip addr show | grep -E "^[0-9]+:" | awk '{print $2}' | sed 's/://'
+# Note down your primary interface (e.g., eth0, ens33, enp0s3)
+```
+
+\<img width="824" height="543" alt="image" src="[https://github.com/user-attachments/assets/6315ec3f-34ce-4dac-bd89-916eba240d2b](https://github.com/user-attachments/assets/6315ec3f-34ce-4dac-bd89-916eba240d2b)" /\>
+
+#### 6\. Create the Configuration File (`local.conf`)
+
+Create the configuration file inside the `/opt/stack/devstack` directory:
 
 ```bash
 cat > local.conf <<'EOF'
 [[local|localrc]]
-# ─── Admin Passwords ──────────────────────────────
+# ── Admin Passwords ────────────────────────────────
 ADMIN_PASSWORD=secret123
 DATABASE_PASSWORD=secret123
 RABBIT_PASSWORD=secret123
 SERVICE_PASSWORD=secret123
 
-# ─── Network Settings ─────────────────────────────
-HOST_IP=$(hostname -I | awk '{print $1}')  # Auto-detect your IP
+# ── Network Settings ───────────────────────────────
+# HOST_IP is auto-detected; set explicitly if detection fails:
+# HOST_IP=192.168.x.x
+
 FLOATING_RANGE=192.168.1.224/27
 FIXED_RANGE=10.11.12.0/24
 FIXED_NETWORK_SIZE=256
-FLAT_INTERFACE=eth0   # Change to your network interface (check with: ip addr)
+FLAT_INTERFACE=ens33    # <-- REPLACE WITH YOUR INTERFACE NAME FROM STEP 5
 
-# ─── Services to Enable ───────────────────────────
-# Core services (enabled by default)
-# ENABLED_SERVICES=key,rabbit,mysql,horizon
-# ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch
-# ENABLED_SERVICES+=,placement-api
-# ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta
-# ENABLED_SERVICES+=,c-api,c-vol,c-sch,c-bak
-# ENABLED_SERVICES+=,g-api,g-reg
-
-# ─── Log Settings ─────────────────────────────────
+# ── Log Settings ───────────────────────────────────
 LOGFILE=/opt/stack/logs/stack.sh.log
 VERBOSE=True
 LOG_COLOR=True
 
-# ─── Image Settings ───────────────────────────────
-# Download and use Cirros (tiny test image, ~12MB)
+# ── Image Settings ─────────────────────────────────
+# Cirros is a tiny test image (~12 MB) — perfect for DevStack
 IMAGE_URLS="http://download.cirros-cloud.net/0.6.2/cirros-0.6.2-x86_64-disk.img"
 EOF
 ```
 
-> 💡 **Check your network interface name:**
+#### 7\. Run the DevStack Installer
+
+```bash
+./stack.sh
+```
+
+> ⏳ This takes **20–45 minutes**. Watch progress in a second terminal:
+>
 > ```bash
-> ip addr show | grep -E "^[0-9]+:" | awk '{print $2}' | sed 's/://'
-> # Common names: eth0, ens33, enp0s3, ens3
-> # Update FLAT_INTERFACE in local.conf accordingly
+> tail -f /opt/stack/logs/stack.sh.log
 > ```
 
-#### 5. Run the DevStack Installer
+**When complete, you will see:**
 
-```bash
-# This takes 20-45 minutes
-./stack.sh
-
-# Watch the logs in another terminal:
-tail -f /opt/stack/logs/stack.sh.log
+```text
+Horizon is now available at http://<HOST_IP>/dashboard
+Username: admin  |  Password: secret123
 ```
 
-**What to expect:**
-```
-[Step 1/X] Installing prerequisite packages...
-[Step 2/X] Setting up MySQL database...
-[Step 3/X] Installing Keystone...
-[Step 4/X] Installing Glance...
-[Step 5/X] Installing Nova...
-[Step 6/X] Installing Neutron...
-[Step 7/X] Installing Cinder...
-[Step 8/X] Installing Horizon...
-...
-DevStack finished at [time]
-Keystone is serving at http://10.0.2.15/identity/
-Horizon is now available at http://10.0.2.15/dashboard
-The default users are: admin and demo
-The password: secret123
-```
-
-#### 6. Access Horizon Dashboard
-
-```
-URL:      http://<your-vm-ip>/dashboard
-Username: admin
-Password: secret123  (or whatever you set in local.conf)
-```
-
----
-
-### Method 3 — Packstack (CentOS/Rocky Linux)
-
-```bash
-# Install RDO repository
-sudo dnf install -y centos-release-openstack-yoga
-
-# Update packages
-sudo dnf update -y
-
-# Install Packstack
-sudo dnf install -y openstack-packstack
-
-# Generate the answer file
-packstack --gen-answer-file /root/answers.cfg
-
-# Edit key settings in answers.cfg:
-# CONFIG_KEYSTONE_ADMIN_PW=admin123
-# CONFIG_DEFAULT_PASSWORD=admin123
-# CONFIG_HORIZON_SSL=n
-# CONFIG_NEUTRON_L2_AGENT=linuxbridge
-
-# Run the installation
-packstack --answer-file /root/answers.cfg
-# Takes 15-30 minutes
-```
-
----
+-----
 
 ## 🔍 Post-Installation Verification
 
 ```bash
-# Source the admin credentials
+# Source admin credentials to use OpenStack CLI
 source /opt/stack/openrc admin admin
-# or
-source /etc/openstack/admin-openrc.sh
 
-# Verify services are running
+# Verify all services registered
 openstack service list
-openstack endpoint list
 
 # Check compute nodes
 openstack compute service list
@@ -306,15 +269,13 @@ openstack compute service list
 # Check network agents
 openstack network agent list
 
-# List available images
+# List images (Cirros should be pre-loaded)
 openstack image list
-
-# List available flavors (instance sizes)
-openstack flavor list
 ```
 
 **Expected service list output:**
-```
+
+```text
 +----+----------+----------+
 | ID | Name     | Type     |
 +----+----------+----------+
@@ -323,56 +284,31 @@ openstack flavor list
 |  3 | nova     | compute  |
 |  4 | neutron  | network  |
 |  5 | cinder   | volume   |
-|  6 | heat     | ..       |
 +----+----------+----------+
 ```
 
----
+-----
 
 ## 🚨 Common Issues and Fixes
 
-```bash
-# Issue: stack.sh fails partway through
-# Fix: Re-run it — DevStack is mostly idempotent
-./stack.sh
+  * **Issue:** `die 509 'Unable to determine DISTRO'` or `Support for noble is incomplete`
+      * **Fix:** You missed Step 4. You must apply the hardcoded Ubuntu override in `functions-common` before running the installer.
+  * **Issue:** `/opt/stack/logs/error.log: No such file or directory`
+      * **Fix:** Manually create the logs folder and assign ownership to the stack user: `sudo mkdir -p /opt/stack/logs && sudo chown -R stack:stack /opt/stack/logs`.
+  * **Issue:** `stack.sh` fails partway through
+      * **Fix:** DevStack is mostly idempotent. Resolve the printed error and re-run `./stack.sh`.
+  * **Issue:** Services not running after system reboot
+      * **Fix:** DevStack is a development environment and *does not persist* its runtime state across reboots. Run `cd /opt/stack/devstack && ./rejoin-stack.sh`.
+  * **Issue:** "Connection refused" on the Horizon dashboard
+      * **Fix:** Check service status with `sudo systemctl status devstack@*`. Restart Apache if necessary: `sudo systemctl restart apache2`.
 
-# Issue: Services not starting after reboot
-# Fix: DevStack doesn't persist across reboots
-cd /opt/stack/devstack
-./rejoin-stack.sh   # Re-attach to existing screen sessions
-
-# Issue: Horizon not loading
-sudo systemctl restart apache2
-
-# Issue: "Connection refused" on dashboard
-# Check if services are running
-sudo systemctl status devstack@*
-
-# Issue: Nova can't launch VMs (KVM not available)
-# Check virtualization type
-virt-host-validate
-# If no KVM, VMs will run as QEMU (much slower but functional)
-```
-
----
+-----
 
 ## ✅ Learning Outcomes
 
-After completing this practical, you should be able to:
-
-- [ ] Explain what OpenStack is and how it compares to AWS
-- [ ] Map OpenStack components to AWS equivalents
-- [ ] Install OpenStack using DevStack or MicroStack
-- [ ] Access the Horizon dashboard
-- [ ] Use the OpenStack CLI with sourced credentials
-- [ ] Verify that all core OpenStack services are running
-- [ ] Understand the role of each core OpenStack component
-
----
-
-## 📚 Further Reading
-
-- [OpenStack Documentation](https://docs.openstack.org/)
-- [DevStack Documentation](https://docs.openstack.org/devstack/)
-- [OpenStack Components Overview](https://www.openstack.org/software/)
-- [OpenStack vs AWS Deep Dive](https://docs.openstack.org/keystone/latest/)
+  - [ ] Explain what OpenStack is and how it compares to AWS.
+  - [ ] Map OpenStack components to AWS equivalents (Nova=EC2, Glance=AMI, etc.).
+  - [ ] Navigate Linux distribution checks in bash scripts and bypass hardcoded limits.
+  - [ ] Install OpenStack using DevStack on an Ubuntu-derivative OS.
+  - [ ] Create and configure the `local.conf` deployment file.
+  - [ ] Source credentials and use the OpenStack CLI to verify running services.
