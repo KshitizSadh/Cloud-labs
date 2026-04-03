@@ -123,7 +123,12 @@ sudo microstack init --auto --control
 
 # Get admin password
 sudo snap get microstack config.credentials.keystone-password
+
+#By default, MicroStack configures a virtual router and assigns the dashboard to a specific local IP address. Usually, this is:
+http://10.20.20.1
 ```
+<img width="1037" height="731" alt="image" src="https://github.com/user-attachments/assets/e8eadc0f-3b66-43fa-814b-dc6c1f426a6f" />
+<img width="566" height="41" alt="image" src="https://github.com/user-attachments/assets/65aee02a-355d-4c44-98eb-329d4fdf082b" />
 
 -----
 
@@ -253,6 +258,7 @@ Username: admin  |  Password: secret123
 ```
 
 -----
+<img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/bbaa309e-8c7e-4a16-a813-48d736226e4c" />
 
 ## 🔍 Post-Installation Verification
 
@@ -286,6 +292,7 @@ openstack image list
 |  5 | cinder   | volume   |
 +----+----------+----------+
 ```
+<img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/ba7b5bb1-3996-4074-b4c5-5a00dcf09ddf" />
 
 -----
 
