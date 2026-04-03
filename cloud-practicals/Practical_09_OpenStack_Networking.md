@@ -331,6 +331,7 @@ curl ifconfig.me
 # From VM1, ping VM2's private IP
 ping 10.0.0.6
 ```
+<img width="601" height="366" alt="image" src="https://github.com/user-attachments/assets/35b99cbb-653c-4446-995a-8855621c83f1" />
 
 ### Network Topology Visualization
 
