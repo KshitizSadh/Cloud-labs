@@ -14,51 +14,45 @@ Create a virtual machine (VM) using OpenStack by creating a project, assigning r
 
 ```
  Before launching a VM, you need:
- 
- 1. Project (Tenant)     → Logical container for resources
+
+ 1. Project (Tenant)  → Logical container for resources
          │
- 2. User + Role         → Who can access what in the project
+ 2. User + Role       → Who can access what in the project
          │
- 3. Image (Glance)      → OS disk image (like AWS AMI)
+ 3. Image (Glance)    → OS disk image (like AWS AMI)
          │
- 4. Flavor              → Hardware spec (CPU, RAM, disk) — like EC2 instance type
+ 4. Flavor            → Hardware spec (CPU, RAM, disk)
          │
- 5. Network (Neutron)   → Which network the VM connects to
+ 5. Network (Neutron) → Which network the VM connects to
          │
- 6. Security Group      → Firewall rules for the VM
+ 6. Security Group    → Firewall rules for the VM
          │
- 7. Key Pair            → SSH key for authentication
+ 7. Key Pair          → SSH key for authentication
          │
          ▼
- 8. Launch Instance → Nova schedules on hypervisor → VM created
+ 8. Launch Instance → Nova schedules on hypervisor → VM running
 ```
 
 ### OpenStack Projects and Users
 
-In OpenStack, **projects** (also called **tenants**) are used to group and isolate resources. Each user can belong to multiple projects with different roles.
+**Projects** (also called tenants) group and isolate resources. Each user can belong to multiple projects with different roles.
 
-**Default Roles:**
 | Role | Permissions |
 |---|---|
-| admin | Full access to all resources across all projects |
-| member | Standard user — can manage own resources within a project |
+| admin | Full access across all projects |
+| member | Manage own resources within a project |
 | reader | Read-only access within a project |
 
 ### OpenStack Image Service (Glance)
-
-**Glance** stores and provides disk images for instance creation. It supports:
 
 | Format | Description |
 |---|---|
 | qcow2 | QEMU Copy-On-Write — most common for OpenStack |
 | raw | Raw disk image |
 | vmdk | VMware format |
-| vhd | Hyper-V format |
 | iso | CD/DVD ISO format |
 
 ### OpenStack Flavors
-
-A **flavor** defines the virtual hardware profile for an instance:
 
 ```
 Flavor: m1.small
@@ -66,7 +60,7 @@ Flavor: m1.small
   ├── RAM:   2 GB
   └── Disk:  20 GB root disk
 
-This is equivalent to EC2 instance types (t2.micro, m5.large, etc.)
+Equivalent to EC2 instance types (t2.micro, m5.large, etc.)
 ```
 
 ---
@@ -74,64 +68,74 @@ This is equivalent to EC2 instance types (t2.micro, m5.large, etc.)
 ## 🛠️ Step-by-Step Guide
 
 ### Prerequisites
-- OpenStack installed (from Practical 07)
-- Access to Horizon dashboard or CLI
-- Admin credentials: `source /opt/stack/openrc admin admin`
+- OpenStack running (from Practical 07) ✅ — confirmed by Horizon Instances page
+- Logged in to Horizon as **admin**
+- CLI access: `source /opt/stack/openrc admin admin`
+
+> 💡 **You're already past the hardest part.** Seeing the Horizon dashboard with the Instances page means DevStack installed successfully. This practical picks up from there.
 
 ---
 
 ### Step A — Create a Project and Assign Roles to Users
+
+> ⚠️ **Important:** Always work inside a dedicated project, not the default `admin` project. This keeps lab resources isolated and reflects real-world multi-tenant usage.
 
 #### Via Horizon Dashboard
 
 **Create a New Project:**
 ```
 Horizon → Identity → Projects → Create Project
-  Name:               CloudLab-Project
-  Description:        Student cloud computing lab environment
-  Enabled:            ✅
-  
+
+  Name:        CloudLab-Project
+  Description: Student cloud computing lab environment
+  Enabled:     ✅
+
 Quotas tab (optional):
-  Instances:          10
-  VCPUs:              20
-  RAM (MB):           51200
-  Floating IPs:       5
-  
+  Instances:    10
+  VCPUs:        20
+  RAM (MB):     51200
+  Floating IPs: 5
+
 → Create Project
 ```
+
+<img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/16495e08-7020-4f57-a4e8-4113d64ce04d" />
 
 **Create a New User:**
 ```
 Horizon → Identity → Users → Create User
-  Username:           student01
-  Email:              student01@lab.local
-  Password:           Student@123
-  Primary Project:    CloudLab-Project
-  Role:               member
+
+  Username:        student01
+  Email:           student01@lab.local
+  Password:        Student@123
+  Primary Project: CloudLab-Project
+  Role:            member
+
+<img width="1917" height="895" alt="image" src="https://github.com/user-attachments/assets/dd68b14e-025a-478c-89b0-3c60fa4adc58" />
+
 → Create User
 ```
 
 **Assign Role to User in Project:**
 ```
-Horizon → Identity → Projects → Find CloudLab-Project →
+Horizon → Identity → Projects → CloudLab-Project →
   Edit → Project Members tab →
-  Add "student01" → Role: "member"
+  Add student01 → Role: member
 → Save
 ```
 
 #### Via CLI
 
 ```bash
-# Source admin credentials
 source /opt/stack/openrc admin admin
 
-# Create a project
+# Create project
 openstack project create \
   --description "Student cloud computing lab" \
   --enable \
   CloudLab-Project
 
-# Create a user
+# Create user
 openstack user create \
   --project CloudLab-Project \
   --password "Student@123" \
@@ -153,34 +157,56 @@ openstack role assignment list --project CloudLab-Project
 
 ---
 
-### Step B — Upload an Image to Glance
+### Step B — Switch to Your Project Context
 
-#### Option 1 — Use Pre-downloaded Cirros (Already in DevStack)
+Before creating resources, switch Horizon to the correct project. Otherwise everything lands in the admin project.
 
-```bash
-# Cirros is pre-loaded by DevStack
-openstack image list
-# Should show: cirros-0.6.2-x86_64-disk
+**Via Horizon:**
+```
+Top navigation bar → click "admin" project dropdown (top-left, next to the OpenStack logo)
+→ Select CloudLab-Project
 ```
 
-#### Option 2 — Upload Ubuntu Cloud Image
+The breadcrumb at the top should now show `Project / Compute / Instances` under CloudLab-Project.
 
-**Download from Ubuntu Cloud Images:**
+**Via CLI:**
 ```bash
-# Navigate to the images directory
+# Source credentials scoped to your project
+source /opt/stack/openrc student01 Student@123
+
+# Or stay as admin but scoped to the new project
+export OS_PROJECT_NAME=CloudLab-Project
+openstack token issue    # verify the project in the output
+```
+
+---
+
+### Step C — Upload an Image to Glance
+
+#### Option 1 — Use Cirros (Already Pre-loaded by DevStack)
+
+```bash
+openstack image list
+# Should show: cirros-0.6.2-x86_64-disk  →  status: active
+```
+
+If Cirros is listed, **you can skip to Step D** — Cirros is a 12 MB minimal test image perfect for verifying instance launch works.
+
+#### Option 2 — Upload Ubuntu Cloud Image (~600 MB)
+
+```bash
 cd /tmp
 
-# Download Ubuntu 22.04 Cloud Image (minimal, ~600MB)
+# Download Ubuntu 22.04 minimal cloud image
 wget https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 
-# Verify the download
+# Verify it is a QCOW2 image
 file jammy-server-cloudimg-amd64.img
-# Should show: QEMU QCOW2 Image
+# Expected: QEMU QCOW2 Image (v3)
 ```
 
 **Upload via CLI:**
 ```bash
-# Upload the image to Glance
 openstack image create \
   --container-format bare \
   --disk-format qcow2 \
@@ -190,63 +216,51 @@ openstack image create \
   --min-disk 8 \
   "Ubuntu 22.04 LTS"
 
-# Verify
+# Verify — status must be 'active' before using it
 openstack image list
-openstack image show "Ubuntu 22.04 LTS"
 ```
 
 **Upload via Horizon:**
 ```
 Horizon → Project → Compute → Images → Create Image
-  Image Name:          Ubuntu 22.04 LTS
-  Image Description:   Ubuntu Jammy cloud image
-  File:                Browse → select jammy-server-cloudimg-amd64.img
-  Format:              QCOW2
-  Architecture:        x86_64
-  Minimum Disk (GB):   8
-  Minimum RAM (MB):    512
-  Visibility:          Public
+
+  Image Name:    Ubuntu 22.04 LTS
+  File:          Browse → jammy-server-cloudimg-amd64.img
+  Format:        QCOW2
+  Architecture:  x86_64
+  Min Disk (GB): 8
+  Min RAM (MB):  512
+  Visibility:    Public
+
+<img width="974" height="793" alt="image" src="https://github.com/user-attachments/assets/7ce8d77c-8699-4944-9e1e-8ba574089ec8" />
+
 → Create Image
 ```
 
-**Image upload output:**
-```
-+------------------+--------------------------------------+
-| Field            | Value                                |
-+------------------+--------------------------------------+
-| container_format | bare                                 |
-| disk_format      | qcow2                                |
-| id               | a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx |
-| min_disk         | 8                                    |
-| min_ram          | 512                                  |
-| name             | Ubuntu 22.04 LTS                     |
-| size             | 629145600                            |
-| status           | active                               |
-| visibility       | public                               |
-+------------------+--------------------------------------+
-```
+Wait for status to change from `Saving` to `Active` before proceeding.
 
 ---
 
-### Step C — Define a Flavor
+### Step D — Define a Flavor
 
-#### List Existing Flavors
+#### Check Existing Flavors First
 
 ```bash
 openstack flavor list
 
-# Default DevStack flavors:
-# m1.tiny   → 1 vCPU, 512MB RAM, 1GB disk
-# m1.small  → 1 vCPU, 2GB RAM, 20GB disk
-# m1.medium → 2 vCPU, 4GB RAM, 40GB disk
-# m1.large  → 4 vCPU, 8GB RAM, 80GB disk
-# m1.xlarge → 8 vCPU, 16GB RAM, 160GB disk
+# DevStack pre-loads these:
+# m1.tiny   → 1 vCPU,  512 MB RAM,  1 GB disk
+# m1.small  → 1 vCPU,  2 GB RAM,   20 GB disk
+# m1.medium → 2 vCPU,  4 GB RAM,   40 GB disk
+# m1.large  → 4 vCPU,  8 GB RAM,   80 GB disk
+# m1.xlarge → 8 vCPU, 16 GB RAM,  160 GB disk
 ```
 
-#### Create a Custom Flavor
+If `m1.tiny` or `m1.small` is listed you can **skip flavor creation** and use those directly.
+
+#### Create a Custom Flavor (Optional)
 
 ```bash
-# Create a lab-specific flavor
 openstack flavor create \
   --vcpus 1 \
   --ram 1024 \
@@ -254,150 +268,139 @@ openstack flavor create \
   --public \
   lab.small
 
-# Create a minimal flavor for testing
-openstack flavor create \
-  --vcpus 1 \
-  --ram 512 \
-  --disk 5 \
-  --public \
-  lab.tiny
-
 # Verify
 openstack flavor show lab.small
 ```
+<img width="678" height="426" alt="image" src="https://github.com/user-attachments/assets/cf050c69-f585-4b56-8c95-aef90938aee1" />
 
 **Via Horizon:**
 ```
 Horizon → Admin → Compute → Flavors → Create Flavor
-  Name:         lab.small
-  vCPUs:        1
-  RAM (MB):     1024
-  Root Disk:    10
-  Ephemeral:    0
-  Swap:         0
-  Public:       ✅
+
+  Name:      lab.small
+  vCPUs:     1
+  RAM (MB):  1024
+  Root Disk: 10
+  Public:    ✅
+
 → Create Flavor
 ```
+<img width="1919" height="737" alt="image" src="https://github.com/user-attachments/assets/bc264848-2dd3-4c74-8773-1a6739d6a19f" />
 
 ---
 
-### Step D — Launch an Instance
+### Step E — Launch an Instance
 
-#### Prerequisites: Create Security Group and Key Pair
+#### 1. Create a Security Group
 
-**Create a Security Group:**
 ```bash
-# Create security group
+# Create the group
 openstack security group create \
   --description "Allow SSH and ICMP" \
   lab-sg
+<img width="1013" height="603" alt="image" src="https://github.com/user-attachments/assets/5c33376f-db2c-4d56-a54e-609fe0de2ad9" />
 
-# Allow SSH
+# Allow SSH (port 22)
 openstack security group rule create \
   --protocol tcp \
   --dst-port 22 \
   --remote-ip 0.0.0.0/0 \
   lab-sg
+<img width="1009" height="647" alt="image" src="https://github.com/user-attachments/assets/6de6f7ea-9e23-4ae9-8c4b-0ef9e582ba03" />
 
 # Allow ICMP (ping)
 openstack security group rule create \
   --protocol icmp \
   --remote-ip 0.0.0.0/0 \
   lab-sg
+<img width="1009" height="647" alt="image" src="https://github.com/user-attachments/assets/2ef42295-954a-4e9f-84ef-b8d453686298" />
 
-# Allow HTTP
+# Allow HTTP (port 80)
 openstack security group rule create \
   --protocol tcp \
   --dst-port 80 \
   --remote-ip 0.0.0.0/0 \
   lab-sg
+<img width="1009" height="647" alt="image" src="https://github.com/user-attachments/assets/f22c84d4-76f7-45c6-a471-0979ceed3545" />
+
 ```
 
-**Create a Key Pair:**
+#### 2. Create a Key Pair
+
 ```bash
-# Generate a key pair and save locally
+# Generate new key pair
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
 openstack keypair create lab-keypair > ~/.ssh/lab-keypair.pem
 chmod 400 ~/.ssh/lab-keypair.pem
 
-# Or import an existing public key
-ssh-keygen -t rsa -b 2048 -f ~/.ssh/openstack-key
+# OR import your existing public key
 openstack keypair create \
-  --public-key ~/.ssh/openstack-key.pub \
+  --public-key ~/.ssh/id_rsa.pub \
   lab-keypair
 ```
 
-**Get the network ID:**
+#### 3. Get the Network ID
+
 ```bash
 openstack network list
-# Note the ID of the 'private' network
+# Note the ID of 'private' or 'shared' network
+<img width="798" height="155" alt="image" src="https://github.com/user-attachments/assets/70e5dbe7-9bfa-44af-a261-4e54b0ac121c" />
+
 NETWORK_ID=$(openstack network show private -f value -c id)
+echo $NETWORK_ID    # confirm it printed a UUID
 ```
 
-#### Launch via CLI
+#### 4. Launch via CLI
 
 ```bash
-# Launch the instance
 openstack server create \
-  --flavor lab.small \
-  --image "Ubuntu 22.04 LTS" \
+  --flavor m1.tiny \
+  --image cirros-0.6.2-x86_64-disk \
   --network $NETWORK_ID \
   --security-group lab-sg \
   --key-name lab-keypair \
   --wait \
   my-first-instance
-
-# Monitor the launch
-openstack server show my-first-instance
-openstack server list
 ```
+<img width="849" height="644" alt="image" src="https://github.com/user-attachments/assets/f385819c-d708-472d-b778-00b66fedc292" />
 
-**Instance states during launch:**
-```
-BUILD → ACTIVE  (success)
-BUILD → ERROR   (failure — check nova logs)
-```
+> 💡 Use `cirros` for your first launch — it's already loaded and boots in under 30 seconds. Switch to Ubuntu once you confirm the workflow works.
 
-**View the console log:**
-```bash
-openstack console log show my-first-instance
-```
-
-**Get VNC console access:**
-```bash
-openstack console url show \
-  --novnc my-first-instance
-# Open the URL in a browser for graphical console access
-```
-
-#### Launch via Horizon Dashboard
+#### 5. Launch via Horizon Dashboard
 
 ```
 Horizon → Project → Compute → Instances → Launch Instance
 
 Step 1 — Details:
-  Instance Name:    my-first-instance
-  Description:      My first OpenStack VM
-  Count:            1
+  Instance Name: my-first-instance
+  Count:         1
 
 Step 2 — Source:
-  Select Boot Source:     Image
-  Create New Volume:      No
-  ✅ Ubuntu 22.04 LTS → Click ↑ to add it to the Allocated list
+  Boot Source:        Image
+  Create New Volume:  No
+  Click ↑ on cirros (or Ubuntu 22.04 LTS) to move to Allocated
 
 Step 3 — Flavor:
-  ✅ lab.small → Click ↑ to allocate
+  Click ↑ on m1.tiny (or lab.small) to allocate
 
 Step 4 — Networks:
-  ✅ private → Click ↑ to allocate
+  Click ↑ on private (or shared) to allocate
 
 Step 5 — Security Groups:
-  Remove 'default' (optional)
-  ✅ lab-sg → Click ↑ to allocate
+  Click ↑ on lab-sg to allocate
+  (optionally remove 'default')
 
 Step 6 — Key Pair:
-  ✅ lab-keypair → Click ↑ to allocate
+  Click ↑ on lab-keypair to allocate
 
-Step 7 — Launch Instance
+→ Launch Instance
+```
+
+The instance will appear in the Instances table. Watch the **Status** column change:
+
+```
+Spawning → Build → Active ✅
 ```
 
 ---
@@ -407,20 +410,42 @@ Step 7 — Launch Instance
 ```bash
 # Check instance status
 openstack server list
+<img width="940" height="119" alt="image" src="https://github.com/user-attachments/assets/1de626ca-3e18-412f-a2b0-bfadfe88bfb4" />
 
-# Expected output:
-+--------------------------------------+------------------+--------+...
-| ID                                   | Name             | Status |...
-+--------------------------------------+------------------+--------+...
-| a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx | my-first-instance| ACTIVE |...
-+--------------------------------------+------------------+--------+...
+# Expected:
++--------------------------------------+------------------+--------+---------------------+
+| ID                                   | Name             | Status | Networks            |
++--------------------------------------+------------------+--------+---------------------+
+| a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx | my-first-instance| ACTIVE | private=10.11.12.5  |
++--------------------------------------+------------------+--------+---------------------+
 
-# Get instance details
+# View full details
 openstack server show my-first-instance
+<img width="898" height="642" alt="image" src="https://github.com/user-attachments/assets/4d97b8f9-c948-4ee9-a5ea-5a9d9542231b" />
 
-# Get console log
+# View boot log
 openstack console log show my-first-instance | tail -20
+<img width="644" height="422" alt="image" src="https://github.com/user-attachments/assets/caae9bf1-1bbb-4727-938e-c33923af2921" />
+
+# Get VNC console URL (open in browser)
+openstack console url show --novnc my-first-instance
+
 ```
+
+**In Horizon** — click the instance name to open its detail page, then click **Console** tab to get an in-browser terminal.
+
+---
+
+## 🚨 Common Issues
+
+| Problem | Fix |
+|---|---|
+| Status stays at `BUILD` > 5 min | Check `openstack console log show my-first-instance` for boot errors |
+| Status shows `ERROR` | Run `openstack server show` — check `fault` field for reason |
+| No networks available in launch wizard | Create a network first (Practical 09), or use DevStack's pre-created `private` network |
+| `Image not found` | Image status is not `active` yet — wait for upload to complete |
+| `Flavor not found` | Run `openstack flavor list` and use an exact name from the output |
+| VNC console says "Connection failed" | Run `sudo systemctl restart devstack@n-novnc.service` |
 
 ---
 
@@ -428,13 +453,15 @@ openstack console log show my-first-instance | tail -20
 
 After completing this practical, you should be able to:
 
-- [ ] Create and manage OpenStack projects
-- [ ] Create users and assign roles using RBAC
-- [ ] Upload OS images to the Glance image service
-- [ ] Define custom flavors for specific workloads
-- [ ] Create security groups and key pairs
-- [ ] Launch instances using both Horizon and CLI
-- [ ] Interpret instance status and console logs
+- [ ] Switch Horizon context between projects
+- [ ] Create projects and assign user roles
+- [ ] Upload OS images to Glance and verify `active` status
+- [ ] List and create flavors
+- [ ] Create security groups with SSH, ICMP, and HTTP rules
+- [ ] Create a key pair and set correct file permissions
+- [ ] Launch an instance via both Horizon and CLI
+- [ ] Read instance status and interpret console logs
+- [ ] Access the instance via VNC console in the browser
 
 ---
 
