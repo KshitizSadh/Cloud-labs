@@ -154,6 +154,7 @@ openstack project list
 openstack user list
 openstack role assignment list --project CloudLab-Project
 ```
+<img width="1245" height="520" alt="image" src="https://github.com/user-attachments/assets/d168aab4-eada-41bb-a13d-a77bded9c99d" />
 
 ---
 
