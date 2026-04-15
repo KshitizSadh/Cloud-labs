@@ -1,4 +1,4 @@
-# Practical 10 — Cloud Security
+<img width="1897" height="699" alt="image" src="https://github.com/user-attachments/assets/1bdc2d0d-1026-4452-92f6-3a95873b7e1f" /><img width="1919" height="983" alt="image" src="https://github.com/user-attachments/assets/574b1a43-d026-414f-b89a-8d69b5b72b37" /># Practical 10 — Cloud Security
 
 ---
 
@@ -96,6 +96,7 @@ AWS Console → IAM → Users → Create user
   (No console access)
 → Next
 ```
+<img width="1919" height="983" alt="image" src="https://github.com/user-attachments/assets/bc3e0bc9-3c26-4112-ac83-98fa068ed4ea" />
 
 #### Part 2: Create Least-Privilege Policies
 
@@ -136,6 +137,7 @@ Policy name:        S3ReadOnly-MyBucket
 Description:        Read-only access to my-specific-bucket only
 → Create policy
 ```
+<img width="1917" height="912" alt="image" src="https://github.com/user-attachments/assets/5df7bd7b-c944-4b3e-be18-85dc09929040" />
 
 **Example 2: EC2 Read-Only with Region Restriction**
 
@@ -161,6 +163,7 @@ Description:        Read-only access to my-specific-bucket only
     ]
 }
 ```
+<img width="1897" height="699" alt="image" src="https://github.com/user-attachments/assets/5f550217-ac41-4616-90b6-f595602d961b" />
 
 **Example 3: Deny Expensive Instance Types**
 
@@ -206,6 +209,7 @@ Role details:
   Description:   Allows EC2 instances to read from S3
 → Create role
 ```
+<img width="1913" height="924" alt="image" src="https://github.com/user-attachments/assets/d148a2d1-6ac2-4bfd-9e71-d1b096cbc665" />
 
 **Attach the role to an EC2 instance:**
 ```
@@ -213,6 +217,7 @@ EC2 → Instances → Select instance → Actions →
 Security → Modify IAM role → Select EC2-S3-ReadOnly-Role →
 Update IAM role
 ```
+<img width="1912" height="399" alt="image" src="https://github.com/user-attachments/assets/8201f303-efd2-4ccf-adcb-2627c8a6bcbe" />
 
 **Test from inside the instance:**
 ```bash
