@@ -1,4 +1,4 @@
-<img width="1897" height="699" alt="image" src="https://github.com/user-attachments/assets/1bdc2d0d-1026-4452-92f6-3a95873b7e1f" /><img width="1919" height="983" alt="image" src="https://github.com/user-attachments/assets/574b1a43-d026-414f-b89a-8d69b5b72b37" /># Practical 10 — Cloud Security
+# Practical 10 — Cloud Security
 
 ---
 
@@ -331,7 +331,7 @@ Force users to enable MFA before accessing any resource:
 ```
 
 ---
-
+<img width="1897" height="699" alt="image" src="https://github.com/user-attachments/assets/1bdc2d0d-1026-4452-92f6-3a95873b7e1f" /><img width="1919" height="983" alt="image" src="https://github.com/user-attachments/assets/574b1a43-d026-414f-b89a-8d69b5b72b37" />
 ### Step C — Configure Data Encryption for S3
 
 #### Enable Default Encryption on an S3 Bucket
