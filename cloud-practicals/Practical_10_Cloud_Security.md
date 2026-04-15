@@ -231,6 +231,7 @@ aws s3 ls s3://my-specific-bucket/
 aws s3 mb s3://new-bucket-test
 # Error: An error occurred (AccessDenied) ...
 ```
+<img width="815" height="475" alt="image" src="https://github.com/user-attachments/assets/47eb4eff-f221-4f17-962c-25327bfdbfa6" />
 
 ---
 
@@ -247,6 +248,7 @@ IAM → User groups → Create group
     - S3ReadOnly-MyBucket (custom policy created above)
 → Create group
 ```
+<img width="1917" height="528" alt="image" src="https://github.com/user-attachments/assets/060d0997-ed6f-49d4-bf17-078ef21bc12e" />
 
 ```
 IAM → User groups → Create group
@@ -263,6 +265,7 @@ IAM → User groups → Create group
 IAM → Users → Select user → Groups tab → Add user to groups →
 Select "developers" → Add to groups
 ```
+<img width="1548" height="434" alt="image" src="https://github.com/user-attachments/assets/73018ff5-1145-4f7a-b53e-056d6b8cd34e" />
 
 #### IAM Policy Testing with IAM Policy Simulator
 
@@ -380,8 +383,49 @@ Now **every object uploaded to this bucket is automatically encrypted at rest**.
         }
     ]
 }
-```
+``` 
+### Phase 1: Create the Target Bucket and Apply the Policy
+Before you can test the block, you need a bucket with the strict policy applied.
+1. Go to the **S3 Dashboard** in your AWS browser console.
+2. Click **Create bucket** and name it something unique (e.g., `kshitiz-secure-bucket-999`).
+3. Once created, click on the bucket, go to the **Permissions** tab, scroll down to **Bucket policy**, and click **Edit**.
+4. Paste the JSON policy from the guide (the one that denies unencrypted uploads), making sure to change `my-secure-bucket` to your actual bucket name (`kshitiz-secure-bucket-999`) in both resource lines. Click **Save**.
 
+### Phase 2: Create the Test File in PuTTY
+Now, bring up your black PuTTY terminal window. You need a file to upload. You can create a simple text file instantly using the `echo` command.
+
+Type this and hit Enter:
+```bash
+echo "This is top secret encrypted data." > testfile.txt
+```
+*(You can verify it worked by typing `ls` to see the file listed, or `cat testfile.txt` to read what you just wrote).*
+
+### Phase 3: Run the Encryption Tests
+
+Now you can run the exact commands from the guide. Just remember to swap out `my-secure-bucket` for the actual name of the bucket you just created.
+
+**Test 1: The "Lazy" Upload (Should Fail)**
+Try to upload the file normally, without telling AWS to encrypt it:
+```bash
+aws s3 cp testfile.txt s3://kshitiz-secure-bucket-999/
+```
+* **Result:** You should get an `upload failed ... AccessDenied` error. This means your bucket policy successfully blocked the unencrypted file!
+
+**Test 2: The Secure Upload (Should Succeed)**
+Now, tell AWS to encrypt the file using the `--sse AES256` flag:
+```bash
+aws s3 cp testfile.txt s3://kshitiz-secure-bucket-999/ --sse AES256
+```
+* **Result:** You should see `upload: testfile.txt to s3://...`. The upload was allowed because you followed the security rule.
+
+**Test 3: Verify the Encryption**
+To prove to yourself that the file is actually encrypted sitting in the bucket, ask AWS to read the file's metadata:
+```bash
+aws s3api head-object --bucket kshitiz-secure-bucket-999 --key testfile.txt
+```
+* **Result:** It will spit out a block of JSON text. Look near the bottom of that text, and you will see `"ServerSideEncryption": "AES256"`. 
+
+Your test is complete, and your bucket is successfully enforcing data security!
 **Test the Encryption Enforcement:**
 ```bash
 # Upload without encryption header (should fail with our policy)
@@ -399,6 +443,10 @@ aws s3api head-object \
   --key testfile.txt
 # Output shows: "ServerSideEncryption": "AES256"
 ```
+<img width="819" height="523" alt="image" src="https://github.com/user-attachments/assets/c17353a2-aeea-4c5f-87fd-c43aafba1676" />
+<img width="1906" height="915" alt="image" src="https://github.com/user-attachments/assets/f6776d73-4f83-4506-bca4-8b3daa83ce1d" />
+<img width="827" height="507" alt="image" src="https://github.com/user-attachments/assets/c71ceb7e-52d0-4981-9938-45b25df4116e" />
+
 
 #### Enable EBS Volume Encryption (EC2 Disk Encryption)
 
@@ -408,13 +456,7 @@ EC2 → Volumes → Create volume →
   ✅ Encrypted
   KMS key: (default) aws/ebs
 ```
-
-**Enforce EBS encryption by default for the account:**
-```
-EC2 → Account Attributes → EBS encryption → Manage →
-  ✅ Enable — Always encrypt new EBS volumes
-→ Update EBS encryption
-```
+<img width="1899" height="304" alt="image" src="https://github.com/user-attachments/assets/27f2b7ba-7b30-4b95-9a21-72c31060d9fb" />
 
 ---
 
@@ -444,12 +486,15 @@ Outbound rules:
 
 → Create security group
 ```
+<img width="1593" height="747" alt="image" src="https://github.com/user-attachments/assets/e9c37735-f208-494f-99bb-211bfe20f86d" />
 
 **Test the Security Group:**
 ```bash
 # Test HTTP access (should work if web server running)
 curl http://<ec2-public-ip>
-
+```
+<img width="820" height="396" alt="image" src="https://github.com/user-attachments/assets/485f2dba-1439-4765-ad72-354d5de7a403" />
+```
 # Test SSH from your IP (should work)
 ssh -i keypair.pem ec2-user@<ec2-public-ip>
 
